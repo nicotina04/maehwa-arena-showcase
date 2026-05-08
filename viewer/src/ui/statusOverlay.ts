@@ -268,7 +268,9 @@ export function mountStatusOverlay(
         animation: maehwa-end-pop 0.4s cubic-bezier(0.2, 1.2, 0.4, 1);
       }
       .maehwa-status .end-banner-icon {
-        font-size: 56px; line-height: 1; margin-bottom: 6px;
+        /* line-height 1 이면 🏁 막대기 같은 descender 영역이 line-box 밖으로 나가
+           카드 padding 안에서 잘림. 1.2 로 여유 확보. */
+        font-size: 56px; line-height: 1.2; margin-bottom: 6px;
       }
       .maehwa-status .end-banner-title {
         font-size: 36px; font-weight: 800; letter-spacing: 0.02em;

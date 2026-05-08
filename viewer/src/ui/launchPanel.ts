@@ -59,6 +59,12 @@ export function mountLaunchPanel(parent: HTMLElement, options: LaunchPanelOption
         border-radius: 6px;
         font: inherit;
       }
+      /* select 자체는 다크 테마지만 <option> popup 은 OS 기본(흰 배경)으로 떠서
+         #e8eaf0 회색 텍스트가 묻힘. option 만 따로 다크 배경+밝은 텍스트로 고정. */
+      .maehwa-launch select option {
+        background: #1a1f2e;
+        color: #e8eaf0;
+      }
       .maehwa-launch .team-toggle { display: flex; gap: 6px; margin-top: 4px; }
       .maehwa-launch .team-toggle button {
         flex: 1; padding: 6px;
