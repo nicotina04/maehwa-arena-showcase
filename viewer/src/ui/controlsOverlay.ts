@@ -148,13 +148,22 @@ export function mountControlsOverlay(
     }
   }
 
+  // togglePlay 직후 onFrame 이 바로 안 불리는 케이스 (긴 phase frame 의 setTimeout
+  // 대기 중) 를 위해 버튼 텍스트는 클릭 즉시 새 상태로 갱신한다 — 그러지 않으면
+  // 1~2초간 ▶ 그대로 보여 "안 눌린 것처럼" 보임.
+  function syncPlayBtn(): void {
+    const running = mode === 'broadcast' ? broadcaster.isRunning : player.isPlaying;
+    play.textContent = running ? '⏸' : '▶';
+  }
   back.addEventListener('click', () => {
     broadcaster.pause();
     player.stepBackward();
+    syncPlayBtn();
   });
   forward.addEventListener('click', () => {
     broadcaster.pause();
     player.stepForward();
+    syncPlayBtn();
   });
   play.addEventListener('click', () => {
     if (mode === 'broadcast') {
@@ -162,18 +171,21 @@ export function mountControlsOverlay(
     } else {
       player.togglePlay();
     }
+    syncPlayBtn();
   });
   slider.addEventListener('input', () => {
     broadcaster.pause();
     player.pause();
     const v = Number(slider.value);
     player.seek(v);
+    syncPlayBtn();
   });
   modeBtn.addEventListener('click', () => {
     mode = mode === 'tick' ? 'broadcast' : 'tick';
     broadcaster.pause();
     player.pause();
     updateModeBtn();
+    syncPlayBtn();
   });
   updateModeBtn();
 
@@ -184,8 +196,7 @@ export function mountControlsOverlay(
       label.textContent = `${index} / ${player.frameCount - 1}`;
       back.disabled = player.isAtStart;
       forward.disabled = player.isAtEnd;
-      const running = mode === 'broadcast' ? broadcaster.isRunning : player.isPlaying;
-      play.textContent = running ? '⏸' : '▶';
+      syncPlayBtn();
       captionText.textContent = player.currentFrame.description;
     },
     setLive(live) {
