@@ -1,3 +1,5 @@
+import { isCompact, onChange as onUiScaleChange, setCompact } from './uiScale';
+
 export type MenuMode = 'tutorial' | 'match' | 'tournament';
 
 export interface MainMenuOptions {
@@ -127,6 +129,33 @@ export function mountMainMenu(parent: HTMLElement, options: MainMenuOptions): Ma
         margin-top: 36px; font-size: 11px; opacity: 0.4;
         letter-spacing: 0.04em;
       }
+      /* ── UI 스케일 토글 ───────────────────────────────────────
+         4K 고배율 + 작은 노트북에서 UI가 크게 보일 때 학생이 직접 줄일 수 있게.
+         부팅 시 자동 추천 토스트와 같은 상태를 공유한다. */
+      .maehwa-menu .ui-scale-toggle {
+        margin-top: 20px;
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.03);
+        font-size: 12px;
+        opacity: 0.7;
+        cursor: pointer;
+        user-select: none;
+        transition: opacity 160ms ease, border-color 160ms ease, background 160ms ease;
+      }
+      .maehwa-menu .ui-scale-toggle:hover {
+        opacity: 1;
+        border-color: rgba(255, 184, 77, 0.5);
+        background: rgba(255, 184, 77, 0.06);
+      }
+      .maehwa-menu .ui-scale-toggle input {
+        width: 14px; height: 14px;
+        accent-color: #ffb84d;
+        cursor: pointer;
+      }
+      .maehwa-menu .ui-scale-toggle.on { opacity: 1; color: #ffd58a; }
       .maehwa-toast {
         position: fixed; left: 50%; bottom: 36px; transform: translateX(-50%);
         padding: 10px 16px; border-radius: 999px;
@@ -144,6 +173,10 @@ export function mountMainMenu(parent: HTMLElement, options: MainMenuOptions): Ma
       <div class="subtitle">MODE SELECT</div>
     </header>
     <div class="cards"></div>
+    <label class="ui-scale-toggle">
+      <input type="checkbox" />
+      <span>컴팩트 UI <small style="opacity:0.55">(고배율 화면용)</small></span>
+    </label>
     <footer>방향키 ← → 또는 마우스로 선택  ·  Enter 로 진입</footer>
   `;
 
@@ -174,6 +207,20 @@ export function mountMainMenu(parent: HTMLElement, options: MainMenuOptions): Ma
   });
 
   parent.appendChild(root);
+
+  // ── UI 스케일 토글 ─ 체크박스 ↔ uiScale 모듈 양방향 바인딩.
+  // 자동 추천 토스트의 "켜기" 결과도 onUiScaleChange 로 흘러와 체크박스에 반영된다.
+  const uiScaleLabel = root.querySelector<HTMLLabelElement>('.ui-scale-toggle')!;
+  const uiScaleCheckbox = uiScaleLabel.querySelector<HTMLInputElement>('input')!;
+  function reflectUiScale(compact: boolean): void {
+    uiScaleCheckbox.checked = compact;
+    uiScaleLabel.classList.toggle('on', compact);
+  }
+  reflectUiScale(isCompact());
+  uiScaleCheckbox.addEventListener('change', () => {
+    setCompact(uiScaleCheckbox.checked);
+  });
+  const unsubscribeUiScale = onUiScaleChange(reflectUiScale);
 
   let toastEl: HTMLDivElement | null = null;
   let toastTimer: number | null = null;
@@ -240,6 +287,7 @@ export function mountMainMenu(parent: HTMLElement, options: MainMenuOptions): Ma
     },
     dispose(): void {
       window.removeEventListener('keydown', onKey);
+      unsubscribeUiScale();
       if (toastTimer !== null) window.clearTimeout(toastTimer);
       toastEl?.remove();
       root.remove();

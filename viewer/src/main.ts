@@ -22,11 +22,16 @@ import { mountControlsOverlay, type ControlsOverlayHandle } from './ui/controlsO
 import { mountLaunchPanel } from './ui/launchPanel';
 import { mountMainMenu, type MenuMode } from './ui/mainMenu';
 import { mountStatusOverlay, type StatusOverlayHandle } from './ui/statusOverlay';
+import { applyStoredScale, maybeShowAutoPrompt } from './ui/uiScale';
 import { mountTutorialPanel } from './tutorial/tutorialPanel';
 
 async function bootstrap(): Promise<void> {
   const mount = document.getElementById('app');
   if (!mount) throw new Error('missing #app mount point');
+
+  // 컴팩트 UI 상태를 가장 먼저 적용 — 이후 mount 되는 오버레이는 처음부터 zoom 적용된
+  // 채로 렌더되어 깜빡임이 없다. 토스트 추천은 첫 렌더 끝나고 applyHash() 뒤에 띄움.
+  applyStoredScale();
 
   const app = new Application();
   await app.init({
@@ -546,6 +551,10 @@ async function bootstrap(): Promise<void> {
   }
   window.addEventListener('hashchange', applyHash);
   applyHash();
+
+  // 첫 부팅 직후 한 번만 — DPR/해상도 조건 맞으면 컴팩트 UI 추천 토스트. 사용자가
+  // 거절/수락하면 dismiss 플래그가 박혀 다시 안 뜬다.
+  maybeShowAutoPrompt(document.body);
 
   recenter();
   window.addEventListener('resize', () => {
